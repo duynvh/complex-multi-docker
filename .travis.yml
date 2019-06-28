@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t duynvh/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true duynvh/react-test npm run test -- --coverage
+
+after_success:
+  - docker build -t duynvh/multi-client ./client
+  - docker build -t duynvh/multi-nginx ./nginx
+  - docker build -t duynvh/multi-server ./server
+  - docker build -t duynvh/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push duynvh/multi-client
+  - docker push duynvh/multi-nginx
+  - docker push duynvh/multi-server
+  - docker push duynvh/multi-worker
